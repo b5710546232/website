@@ -8,38 +8,37 @@
   import OpenGraph from "../../components/open-graph.svelte";
   import SubmissionSuccess from "../../components/submission-success.svelte";
 
-  const studentUnlimitedSubject = "Educational Discount Verification";
-
+  const selfHostingSubject = "Self-hosting";
   const subjects = [
-    "Abuse Report",
-    "Billing",
-    studentUnlimitedSubject,
-    "Self-hosting Gitpod",
-    "Open Source Sponsorship",
+    selfHostingSubject,
+    "Educational Discount",
+    "Reselling",
     "Other",
   ];
+  const cloudPlatforms = [
+    "Amazon Elastic Kubernetes Service (EKS)",
+    "Google Kubernetes Engine (GKE)",
+    "Kubernetes",
+    "Microsoft Azure Kubernetes Service (AKS)",
+  ];
+  const noOfEngineers = ["2-5", "6-20", "21-50", "51-250", "+250"];
 
-  let isStudentEmailNoteShown: boolean = false;
   let sectionStart: HTMLElement;
+  let isCloudPlatformsSelectShown = false;
 
-  $: if (formData.selectedSubject.value === studentUnlimitedSubject) {
-    isStudentEmailNoteShown = true;
+  $: if (formData.selectedSubject.value == selfHostingSubject) {
+    isCloudPlatformsSelectShown = true;
   } else {
-    isStudentEmailNoteShown = false;
+    isCloudPlatformsSelectShown = false;
   }
 
   const formData: Form = {
-    consent: {
-      el: null,
-      valid: false,
-      checked: false,
-    },
-    email: {
+    selectedSubject: {
       el: null,
       valid: false,
       value: "",
     },
-    message: {
+    cloudInfrastructure: {
       el: null,
       valid: false,
       value: "",
@@ -49,7 +48,27 @@
       valid: false,
       value: "",
     },
-    selectedSubject: {
+    consent: {
+      el: null,
+      valid: false,
+      checked: false,
+    },
+    workEmail: {
+      el: null,
+      valid: false,
+      value: "",
+    },
+    companyWebsite: {
+      el: null,
+      valid: false,
+      value: "",
+    },
+    noOfEngineers: {
+      el: null,
+      valid: true,
+      value: "",
+    },
+    message: {
       el: null,
       valid: false,
       value: "",
@@ -68,7 +87,7 @@
 
     window.analytics.identify({
       name_untrusted: formData.name.value,
-      email_untrusted: formData.email.value,
+      email_untrusted: formData.workEmail.value,
     });
 
     window.analytics.track("message_submitted", {
@@ -77,15 +96,28 @@
 
     const email: Email = {
       from: {
-        email: formData.email.value,
+        email: formData.workEmail.value,
         name: formData.name.value,
       },
       subject:
         formData.selectedSubject.value +
         "  (from " +
-        formData.email.value +
+        formData.workEmail.value +
         ")",
-      message: formData.message.value,
+      message: `
+        ${
+          formData.cloudInfrastructure.value
+            ? `Cloud Infrastructure: ${formData.cloudInfrastructure.value}`
+            : ""
+        }
+        Company website: ${formData.companyWebsite.value}
+        ${
+          formData.noOfEngineers.value
+            ? `Total number of engineers: ${formData.noOfEngineers.value}`
+            : ""
+        }
+        Message: ${formData.message.value}
+      `,
     };
 
     try {
@@ -130,17 +162,15 @@
 
 <OpenGraph
   data={{
-    description:
-      "Need help with any question or issue? Please get in contact and we’ll get onto it right away.",
-    title: "Contact Support",
+    description: "We’d love to talk about how we can work together.",
+    title: "Contact Sales",
   }}
 />
 
 <header class="tight">
-  <h1>Contact Support</h1>
+  <h1>Contact Sales</h1>
   <p class="max-w-2xl mx-auto">
-    Need help with any question or issue? Please get in contact and we’ll get
-    onto it right away.
+    We’d love to talk about how we can work together.
   </p>
 </header>
 
@@ -186,8 +216,28 @@
             </ul>
           </fieldset>
         </li>
+        {#if isCloudPlatformsSelectShown}
+          <li class:error={isFormDirty && !formData.cloudInfrastructure.valid}>
+            <label class="max-w-md">
+              <select
+                name="cloudInfrastructure"
+                bind:value={formData.cloudInfrastructure.value}
+                bind:this={formData.cloudInfrastructure.el}
+              >
+                <option class="option"
+                  >Which cloud infrastructure do you use?</option
+                >
+                {#each cloudPlatforms as n}
+                  <option class="option" value={n}>
+                    {n}
+                  </option>
+                {/each}
+              </select>
+            </label>
+          </li>
+        {/if}
         <li class:error={isFormDirty && !formData.name.valid}>
-          <label for="name">Name*</label>
+          <label for="name">Full Name*</label>
           <input
             id="name"
             bind:value={formData.name.value}
@@ -200,24 +250,51 @@
             autocomplete="name"
           />
         </li>
-        <li class:error={isFormDirty && !formData.email.valid}>
-          <label for="email"
-            >E-mail*
-            {#if isStudentEmailNoteShown}
-              (Please use your student or faculty email)
-            {/if}
-          </label>
+        <li class:error={isFormDirty && !formData.workEmail.valid}>
+          <label for="email">Work e-mail* </label>
           <input
             id="email"
-            bind:value={formData.email.value}
-            bind:this={formData.email.el}
+            bind:value={formData.workEmail.value}
+            bind:this={formData.workEmail.el}
             on:change={() => {
-              formData.email.valid =
-                formData.email.value && formData.email.el.checkValidity();
+              formData.workEmail.valid =
+                formData.workEmail.value &&
+                formData.workEmail.el.checkValidity();
             }}
             type="email"
             autocomplete="email"
           />
+        </li>
+        <li class:error={isFormDirty && !formData.companyWebsite.valid}>
+          <label for="company-website">Company website* </label>
+          <input
+            id="compnay-website"
+            bind:value={formData.companyWebsite.value}
+            bind:this={formData.companyWebsite.el}
+            on:change={() => {
+              formData.companyWebsite.valid =
+                formData.companyWebsite.value &&
+                formData.companyWebsite.el.checkValidity();
+            }}
+            type="text"
+            autocomplete="organization"
+          />
+        </li>
+        <li class:error={isFormDirty && !formData.noOfEngineers.valid}>
+          <label class="max-w-sm">
+            <select
+              name="noOfEngineers"
+              bind:value={formData.noOfEngineers.value}
+              bind:this={formData.noOfEngineers.el}
+            >
+              <option class="option">Total number of engineers</option>
+              {#each noOfEngineers as n}
+                <option class="option" value={n}>
+                  {n}
+                </option>
+              {/each}
+            </select>
+          </label>
         </li>
         <li class:error={isFormDirty && !formData.message.valid}>
           <label for="message">Your message*</label>
@@ -246,7 +323,7 @@
           />
           <label for="consent"
             >I consent to having this website store my submitted information so
-            that a support staff can respond to my inquiry.</label
+            that the sales team can respond to my inquiry.</label
           >
         </li>
         <li>
